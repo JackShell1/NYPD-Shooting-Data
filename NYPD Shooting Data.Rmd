@@ -1,0 +1,75 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+**Introduction**
+
+In this project, we analyze a data set of all shooting incidents in New York City since 2006. This data set includes features such as borough, precint, latitude, longitude, and victim and perpetrator demographics. In our analysis, we will try to identify a relationship between victim and perpetrator ages, as well as latitude and longitude of the incidents. 
+
+```{r message=FALSE}
+# include necessary packages
+library(lubridate)
+library(tidyverse) 
+library(ggplot2)
+
+```
+
+**Data Preparation**
+
+```{r}
+# import the dataset
+url = "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+df = read.csv(url)
+```
+
+**Data Summary**
+
+```{r}
+summary(df)
+```
+
+
+**Data Visualization**
+
+```{r warning=FALSE}
+
+# Plot the number of shootings by Borough 
+ggplot(df, aes_(x = df$BORO, fill=df$BORO)) + geom_bar(stat = "count") + ggtitle("New York Shootings by Borough (2006 - 2021)") + xlab("Borough") + ylab("Number of Shootings")
+
+# Plot the number of shootings by victim age 
+ggplot(df, aes_(x = df$VIC_AGE_GROUP, fill=df$VIC_AGE_GROUP)) + geom_bar(stat = "count") + ggtitle("New York Shootings by Victim Age (2006 - 2021)") + xlab("Victim Age") + ylab("Number of Shootings") 
+
+```
+
+These data indicate that young adults (aged 18-24) are much more likely to be shooting victims than are elderly individuals (65+). Now Lets look at the ages of the perpetrators in the shootings of young people.
+
+```{r}
+# Exclude blanks
+df = subset(df, df$PERP_AGE_GROUP %in% c("<18", "18-24", "25-44", "45-64", "65+"))
+# Generate Plot
+ggplot(df, aes_(x = df$PERP_AGE_GROUP, fill=df$PERP_AGE_GROUP)) + geom_bar(stat = "count") + ggtitle("NY Shootings of Young Adults (18-24) by Perpetrator Age (2006 - 2021)") + xlab("Perpetrator Age") + ylab("Number of Shootings")
+
+```
+
+These data indicate that the majority of shootings of young adults are also perpetrated by young adults. This makes intuitive sense, as young adults probably spend more time with other young adults than any other cohort.
+
+
+**Data Modeling**
+
+```{r warning=FALSE}
+# model the relationship between latitude and longitude of shootings
+model = lm(df$Longitude ~ df$Latitude, data = df)
+summary(model)
+pred = predict(model)
+ggplot(df) + geom_point(aes(x = df$Latitude, y = df$Longitude), color="blue") + geom_point(aes(x = df$Latitude, y = pred), color="red") + ggtitle("Latitude vs Longitude of New York Shootings (2006-2021)") + xlab("Latitude") + ylab("Longitude")
+
+  
+```
+
+The linear model indicates that latitude of a shooting in our data set is significantly correlated with its longitude. 
+
+**Potential Bias**
+
+The data set could potentially be biased by the exclusion of data from shootings that go unreported. If certain demographics are more likely to be the vicitm or perpetrator of unreported shootings, conclusions drawn from the data may be misleading. 
+
